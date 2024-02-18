@@ -257,15 +257,13 @@ async function checkHostPing(host:string):Promise<boolean> {
 }
 
 function  getIPMIPowerStatus(ipAddr:string,ipmiuser:string,ipmipasswd:string):boolean {
-	const result = execSync(`ipmitool -H ${ipAddr} -U ${ipmiuser} -P ${ipmipasswd} power status`,{
+	const cmd = `ipmitool -H ${ipAddr} -U ${ipmiuser} -P ${ipmipasswd} power status`;
+	console.log(cmd);
+	const result = execSync(cmd,{
 		encoding:'utf8',
 	});
-	const powerStatusRegex = /Classis Power is (\w)/;
-	const match = powerStatusRegex.exec(result);
-	if (match && match[1]) {
-		if (match[1] === "on") {
-			return true;
-		}
+	if (result.startsWith('Chassis Power is on')) {
+		return true;
 	}
 	console.log(`ipmitool ${ipAddr} :${result.toString()}`);
 	return false;
