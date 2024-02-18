@@ -104,6 +104,16 @@ export function activate(context: vscode.ExtensionContext) {
 							panel.webview.postMessage({ command: 'pingBMCFail',data: hostBMCIndex.toString()});
 						});
 					break;
+				case 'scanAllBMC':
+					for(let i = 0; i < getConf.length; i++) {
+						let serverPowerStatus:boolean = getIPMIPowerStatus(getConf[i].bmcip,getConf[i].bmcUser,getConf[i].bmcPasswd);
+						if (serverPowerStatus) {
+							panel.webview.postMessage({ command: 'BMCPowerOn',data: i.toString()});
+						}else {
+							panel.webview.postMessage({ command: 'BMCPowerOff',data: i.toString()});
+						}
+					}
+					break;
 				case 'BMCSwitch':
 					let hostPowerBMCIndex:number = getHostBMCipIndex(message.text,getConf);
 					let hostPowerStatus:boolean = getIPMIPowerStatus(getConf[hostPowerBMCIndex].bmcip,getConf[hostPowerBMCIndex].bmcUser,getConf[hostPowerBMCIndex].bmcPasswd);
@@ -130,12 +140,15 @@ function getWebviewContent(confCtx:Array<ServerHost>) {
     return`
       <html>
         <body>
+		  <button class="hostsbtn" id="pingAllBtn">ping All ${serverHostNum} Host</button>
+		  <button class="bmcsbtn" id="pingAllBMCBtn">ping All ${serverHostNum} BMC</button>
+		  <button class="scanbmcbtn" id="scanAllBMCBtn">get All ${serverHostNum} BMC power status</button>
 		  <table id="serverhosttable">
 			<tr>
 				<th>Host IP</th>
-				<th>connection status</th>
+				<th>Try ping</th>
 				<th>BMC IP</th>
-				<th>BMC IP ping</th>
+				<th>Try ping</th>
 				<th>power status</th>
 				<th>power control</th>
 			</tr>
@@ -144,14 +157,12 @@ function getWebviewContent(confCtx:Array<ServerHost>) {
 					<td bgcolor="red">${row.hostip}</td>
 					<td><button class="hostbtn" id="${row.hostip}btn">ping ${row.hostip}</button></td>
 					<td>${row.bmcip}</td>
-					<td><button class="bmcbtn" id="${row.bmcip}">ping bmc ${row.bmcip}</button></td>
+					<td><button class="bmcbtn" id="${row.bmcip}">ping ${row.bmcip}</button></td>
 					<td>${row.bmcip}</td>
 					<td><button class="bmcPowerbtn" id="${row.bmcip}pow">switch bmc ${row.bmcip} power</button></td>
 				</tr>
 			`)}
 		  </table>
-		  <button class="hostsbtn" id="pingAllBtn">ping All ${serverHostNum} Host</button>
-		  <button class="bmcsbtn" id="pingAllBMCBtn">ping All ${serverHostNum} BMC</button>
           <script>
             const vscode = acquireVsCodeApi();
             document.getElementById('pingAllBtn').addEventListener('click', () => {
@@ -159,6 +170,9 @@ function getWebviewContent(confCtx:Array<ServerHost>) {
             });
 			document.getElementById('pingAllBMCBtn').addEventListener('click', () => {
 				vscode.postMessage({ command: 'pingAllBMC',text: null });
+			});
+			document.getElementById('scanAllBMCBtn').addEventListener('click', () => {
+				vscode.postMessage({ command: 'scanAllBMC',text: null });
 			});
 			let hostbtn = document.querySelectorAll('.hostbtn');
 			let hostbtnIds = [];
