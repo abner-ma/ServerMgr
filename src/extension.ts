@@ -28,7 +28,7 @@ export function activate(context: vscode.ExtensionContext) {
 	let disposable = vscode.commands.registerCommand('servermgr.mgrcmd', () => {
 		// The code you place here will be executed every time your command is executed
 		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from ServerMgr!');
+		vscode.window.showInformationMessage('Hello , ServerMgr!');
 		let getConf:ServerHost[];
 		getConf = vscode.workspace.getConfiguration().get<Array<ServerHost>>('my.hostlist')||[];
 		
@@ -273,29 +273,38 @@ async function checkHostPing(host:string):Promise<boolean> {
 function  getIPMIPowerStatus(ipAddr:string,ipmiuser:string,ipmipasswd:string):boolean {
 	const cmd = `ipmitool -H ${ipAddr} -U ${ipmiuser} -P ${ipmipasswd} power status`;
 	console.log(cmd);
-	const result = execSync(cmd,{
-		encoding:'utf8',
-	});
-	if (result.startsWith('Chassis Power is on')) {
-		return true;
+	let result:string='';
+	try {
+		result = execSync(cmd,{
+			encoding:'utf-8',
+		});
+		if (result.startsWith('Chassis Power is on')) {
+			return true;
+		}
+	}catch(e){
+		console.error(`execSync error:${e}`);
+	}finally{
+		console.log(`ipmitool ${ipAddr} :${result}`);
 	}
-	console.log(`ipmitool ${ipAddr} :${result.toString()}`);
 	return false;
 }
 
 function  doIPMICMD(ipAddr:string,ipmiuser:string,ipmipasswd:string,powerStatus:boolean) {
 	let result;
-	if (powerStatus) {
-		result = execSync(`ipmitool -H ${ipAddr} -U ${ipmiuser} -P ${ipmipasswd} power on`,{
-			encoding:'utf8',
-		});
-	}else{
-		result = execSync(`ipmitool -H ${ipAddr} -U ${ipmiuser} -P ${ipmipasswd} power off`,{
-			encoding:'utf8',
-		});
-	}
-	
-	console.log(`ipmitool ${ipAddr} :${result.toString()}`);
+        try {
+                if (powerStatus) {
+                        result = execSync(`ipmitool -H ${ipAddr} -U ${ipmiuser} -P ${ipmipasswd} power on`,{
+                                encoding:'utf-8',
+                        });
+                }else{
+                        result = execSync(`ipmitool -H ${ipAddr} -U ${ipmiuser} -P ${ipmipasswd} power off`,{
+                                encoding:'utf-8',
+                        });
+                }
+        }catch(e) {
+                console.error(`execSync error:${e}`);
+        }
+        console.log(`ipmitool ${ipAddr} :${result}`);
 }
 
 // This method is called when your extension is deactivated
